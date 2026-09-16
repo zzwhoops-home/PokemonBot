@@ -9,7 +9,7 @@ const POSSIBLE_PERKS = {
 // TESTING reasons, locks to only pokemon-dev channel and additional dev server
 //const ALLOWED_CHANNELS=["1065064038427541594", "1053540259717189714"]
 
-const ALLOWED_CHANNELS=["1065064038427541594", "1065049126871515176", "1053540259717189714"];
+const ALLOWED_CHANNELS = ["1065064038427541594", "1065049126871515176", "1053540259717189714", "1338893857227804797", "1549612233753894964"];
 
 const { stat } = require('fs');
 // imports all the util functions we need
@@ -49,12 +49,12 @@ app.get('/', (req, res) => {
 
 app.listen(3000, () => { console.log("Ready!") })
 
-client.on('ready', () => { 
-    console.log("Bot is ready");
+client.on('ready', () => {
+  console.log("Bot is ready");
 })
 
 // schedules the daily pokemon rarity updates
-cron.schedule('00 00 * * *', increaseRarity, {timezone: "America/New_York"});
+cron.schedule('00 00 * * *', increaseRarity, { timezone: "America/New_York" });
 
 // schedules the weekly summary and perk updates
 cron.schedule('0 12 * * 0', perkUpdate, { timezone: "America/New_York" });
@@ -68,15 +68,15 @@ client.on('messageCreate', async msg => {
   }
 
   // critical, its janky yeah but pls don't remove it breaks stuff
-  if (msg.content.startsWith('!')){
+  if (msg.content.startsWith('!')) {
     saveData = load(saveData);
   }
 
-  if (cmd(msg, 'help-pokemon')){
+  if (cmd(msg, 'help-pokemon')) {
     sendLongMessage(msg.channel, written_messages.HELP_POKEMON);
   }
 
-  else if (cmd(msg, 'help-commands')){
+  else if (cmd(msg, 'help-commands')) {
     sendLongMessage(msg.channel, written_messages.HELP_COMMANDS);
   }
 
@@ -84,14 +84,14 @@ client.on('messageCreate', async msg => {
     sendLongMessage(msg.channel, written_messages.HELP_PERKS);
   }
 
-  else if (cmd(msg, 'help-admin')){
+  else if (cmd(msg, 'help-admin')) {
     sendLongMessage(msg.channel, written_messages.HELP_ADMIN);
   }
 
-  else if (cmd(msg, 'set-personality')){
+  else if (cmd(msg, 'set-personality')) {
     personality = msg.content.substring(16);
 
-    if (personality.length < 1){
+    if (personality.length < 1) {
       msg.channel.send("Please provide a personality");
       return;
     }
@@ -110,8 +110,8 @@ client.on('messageCreate', async msg => {
     save(saveData);
   }
 
-  else if (cmd(msg, 'register')){
-    if(setupDefaultsIfNecessary(saveData, msg.author.id, msg.author.globalName)){
+  else if (cmd(msg, 'register')) {
+    if (setupDefaultsIfNecessary(saveData, msg.author.id, msg.author.username)) {
       msg.channel.send("Successfully registered :thumbsup:");
     } else {
       msg.channel.send("You are already registered :thumbsup:");
@@ -125,8 +125,8 @@ client.on('messageCreate', async msg => {
     if (!statusPerson) {
       statusPerson = msg.author;
     }
-    else{
-      if (checkOffLimits(msg)){
+    else {
+      if (checkOffLimits(msg)) {
         return;
       }
     }
@@ -137,9 +137,9 @@ client.on('messageCreate', async msg => {
       userData = saveData[statusPerson.id];
 
       if (!userData) {
-          msg.channel.send("@" + statusPerson.globalName + " has no available data");
+        msg.channel.send("@" + statusPerson.username + " has no available data");
       } else {
-  
+
         let pokedex = "{\n";
         for (let pokemon of Object.keys(saveData[statusPerson.id]["pokedex"])) {
           pokedex += "\t" + pokemon + ": " + userData["pokedex"][pokemon] + "\n";
@@ -148,20 +148,20 @@ client.on('messageCreate', async msg => {
 
         let perks_list = "{\n";
         for (const [perkId, perkName] of Object.entries(POSSIBLE_PERKS)) {
-            if (saveData[perkId] && Array.isArray(saveData[perkId])){
-              if (saveData[perkId].includes("" + statusPerson.id)){
-                perks_list += `\t${perkName}\n`;
-              }
-            }
-            else if (saveData[perkId] == "" + statusPerson.id) {
+          if (saveData[perkId] && Array.isArray(saveData[perkId])) {
+            if (saveData[perkId].includes("" + statusPerson.id)) {
               perks_list += `\t${perkName}\n`;
             }
+          }
+          else if (saveData[perkId] == "" + statusPerson.id) {
+            perks_list += `\t${perkName}\n`;
+          }
         }
         perks_list += "}";
-        
+
         msg.channel.send(
-`
-**@${statusPerson.globalName}'s Status**:
+          `
+**@${statusPerson.username}'s Status**:
 *Overall points:* ${saveData[statusPerson.id]["points"] || 0}
 *Weekly points:* ${saveData[statusPerson.id]["weekly_points"] || 0}
 *Overall BARNABY points:* ${saveData[statusPerson.id]["barnaby_points"] || 0}
@@ -172,33 +172,33 @@ client.on('messageCreate', async msg => {
         );
       }
     } catch (e) {
-      msg.channel.send("No status found for @" + statusPerson.globalName);
+      msg.channel.send("No status found for @" + statusPerson.username);
     }
   }
 
-  else if (cmd(msg, 'opt-out')){
-    setupDefaultsIfNecessary(saveData, msg.author.id, msg.author.globalName);
+  else if (cmd(msg, 'opt-out')) {
+    setupDefaultsIfNecessary(saveData, msg.author.id, msg.author.username);
     saveData[msg.author.id]["wants-to-play"] = false;
     msg.channel.send("Successfully opted out for playing the game. Any catch messages that mention you will be deleted")
     save(saveData);
   }
 
-  else if (cmd(msg, 'opt-in')){
-    setupDefaultsIfNecessary(saveData, msg.author.id, msg.author.globalName);
+  else if (cmd(msg, 'opt-in')) {
+    setupDefaultsIfNecessary(saveData, msg.author.id, msg.author.username);
     saveData[msg.author.id]["wants-to-play"] = true;
     msg.channel.send("Successfully opted in to playing the game. Happy hunting :grin:");
     save(saveData);
   }
 
-  else if (cmd(msg, 'off-limits')){
-    const result = "Here are all the people who do NOT want to be involved in the game:\n\n" + 
-    Object.values(saveData)
-    .filter(user => user["wants-to-play"] != undefined && user["wants-to-play"] === false)
-    .map(user => `\t**${user["username"]}**`)
-    .join('\n') +
-  "\n\nAny \"!catch\" messages that mention these people will be deleted";
+  else if (cmd(msg, 'off-limits')) {
+    const result = "Here are all the people who do NOT want to be involved in the game:\n\n" +
+      Object.values(saveData)
+        .filter(user => user["wants-to-play"] != undefined && user["wants-to-play"] === false)
+        .map(user => `\t**${user["username"]}**`)
+        .join('\n') +
+      "\n\nAny \"!catch\" messages that mention these people will be deleted";
 
-msg.channel.send(result);
+    msg.channel.send(result);
 
   }
 
@@ -210,36 +210,36 @@ msg.channel.send(result);
 
     users_mentioned = msg.mentions.users.size;
     msg.mentions.users.forEach(caughtPersonID => {
-        caughtPersonID = "" + caughtPersonID;
-        let caughtPersonUsername = saveData[caughtPersonID]["username"];
+      caughtPersonID = "" + caughtPersonID;
+      let caughtPersonUsername = saveData[caughtPersonID]["username"];
 
-        const catchCheck = isCatchAllowed(saveData, msg.author.id, caughtPersonID);
-          if (!catchCheck.allowed) {
-              msg.channel.send(`Catches between you and ${caughtPersonUsername} are still on cooldown for ${catchCheck.remainingTime} minute(s).`);
-              return;
+      const catchCheck = isCatchAllowed(saveData, msg.author.id, caughtPersonID);
+      if (!catchCheck.allowed) {
+        msg.channel.send(`Catches between you and ${caughtPersonUsername} are still on cooldown for ${catchCheck.remainingTime} minute(s).`);
+        return;
+      }
+
+      if ("" + msg.author.id === caughtPersonID) {
+        askAI("A user has tried to 'catch' themselves. Ridicule them for attempting such a ridiculous thing.", msg.author.id)
+          .then(response => sendLongMessage(msg.channel, response));
+      } else {
+        const currentGuild = client.guilds.cache.get(process.env.GUILD_ID);
+        currentGuild.members.fetch(caughtPersonID).then(person => {
+
+          let multiplier = handleSpecialPerks(saveData, msg, msg.author.id, caughtPersonID);
+
+          if (person.roles.cache.some(role => role.name === "Shiny")) {
+            awardPointsAndSendMessage(saveData, msg, msg.author.id, caughtPersonID, "Shiny", 10, multiplier);
+          } else if (person.roles.cache.some(role => role.name === "Rare")) {
+            awardPointsAndSendMessage(saveData, msg, msg.author.id, caughtPersonID, "Rare", 5, multiplier);
+          } else if (person.roles.cache.some(role => role.name === "Uncommon")) {
+            awardPointsAndSendMessage(saveData, msg, msg.author.id, caughtPersonID, "Uncommon", 3, multiplier);
+          } else {
+            awardPointsAndSendMessage(saveData, msg, msg.author.id, caughtPersonID, "Normal", 1, multiplier);
           }
 
-        if ("" + msg.author.id === caughtPersonID) {
-            askAI("A user has tried to 'catch' themselves. Ridicule them for attempting such a ridiculous thing.", msg.author.id)
-                .then(response => sendLongMessage(msg.channel,response));
-        } else {
-          const currentGuild = client.guilds.cache.get(process.env.GUILD_ID);
-          currentGuild.members.fetch(caughtPersonID).then(person => {
-
-              let multiplier = handleSpecialPerks(saveData, msg, msg.author.id, caughtPersonID);
-
-              if (person.roles.cache.some(role => role.name === "Shiny")) {
-                  awardPointsAndSendMessage(saveData, msg, msg.author.id, caughtPersonID, "Shiny", 10, multiplier);
-              } else if (person.roles.cache.some(role => role.name === "Rare")) {
-                  awardPointsAndSendMessage(saveData, msg, msg.author.id, caughtPersonID, "Rare", 5, multiplier);
-              } else if (person.roles.cache.some(role => role.name === "Uncommon")) {
-                  awardPointsAndSendMessage(saveData, msg, msg.author.id, caughtPersonID, "Uncommon", 3, multiplier);
-              } else {
-                  awardPointsAndSendMessage(saveData, msg, msg.author.id, caughtPersonID, "Normal", 1, multiplier);
-              }
-
-            }).catch(console.error);
-        }
+        }).catch(console.error);
+      }
     });
   }
 
@@ -248,7 +248,7 @@ msg.channel.send(result);
 
     // Filter and validate
     const users = Object.values(saveData)
-    .filter(user => user && typeof user === 'object' && user["wants-to-play"]);
+      .filter(user => user && typeof user === 'object' && user["wants-to-play"]);
 
     if (users.length === 0) {
       await msg.channel.send("No users found");
@@ -263,11 +263,11 @@ msg.channel.send(result);
 
     // Append leaderboard messages
     messageContent += "Here is the overall TOTAL point leaderboard!:\n" +
-    topUsersByPoints.map((user, index) => `${index + 1}. **${user["username"]}**: ${user["points"]}`).join('\n') + "\n\n";
-    
+      topUsersByPoints.map((user, index) => `${index + 1}. **${user["username"]}**: ${user["points"]}`).join('\n') + "\n\n";
+
     messageContent += "Here is the overall BARNABY point leaderboard!:\n" +
       topUsersByBarnabyPoints.map((user, index) => `${index + 1}. **${user["username"]}**: ${user["barnaby_points"]}`).join('\n');
-    
+
     sendLongMessage(msg.channel, messageContent);
 
     // Only send the overall total point/barnaby point leaderboard and not any weekly leaderboards because its more suspensful that way
@@ -343,7 +343,7 @@ msg.channel.send(result);
     if (!getRarityPerson) {
       getRarityPerson = msg.author;
     }
-    msg.channel.send(`${getRarityPerson.globalName} has a rarity value of ${saveData["" + getRarityPerson.id]["rarityValue"]}`);
+    msg.channel.send(`${getRarityPerson.username} has a rarity value of ${saveData["" + getRarityPerson.id]["rarityValue"]}`);
   }
 
   else if (cmd(msg, 'set-rarity')) {
@@ -355,27 +355,27 @@ msg.channel.send(result);
   else if (cmd(msg, 'next-season')) {
     if (msg.member.roles.cache.some(role => role.name === 'PokemonBotManager') || msg.author.id === process.env.AUTHOR_ID) {
 
-        saveData = load(saveData);
+      saveData = load(saveData);
 
-        const seasons = ["SUMMER", "FALL", "WINTER", "SPRING"];
-        const emojis = [":sunny:", ":fallen_leaf:", ":snowflake:", ":herb:"];
+      const seasons = ["SUMMER", "FALL", "WINTER", "SPRING"];
+      const emojis = [":sunny:", ":fallen_leaf:", ":snowflake:", ":herb:"];
 
-        // Get the current season index and calculate the next season
-        let currentSeasonIndex = seasons.indexOf(saveData["SEASON_ID"] || "SUMMER");
-        let nextSeasonIndex = (currentSeasonIndex + 1) % seasons.length;
+      // Get the current season index and calculate the next season
+      let currentSeasonIndex = seasons.indexOf(saveData["SEASON_ID"] || "SUMMER");
+      let nextSeasonIndex = (currentSeasonIndex + 1) % seasons.length;
 
-        saveData["SEASON_ID"] = seasons[nextSeasonIndex];
-        saveData["SEASON_EMOJI"] = emojis[nextSeasonIndex];
+      saveData["SEASON_ID"] = seasons[nextSeasonIndex];
+      saveData["SEASON_EMOJI"] = emojis[nextSeasonIndex];
 
-        save(saveData);
+      save(saveData);
 
-        msg.channel.send(`Welcome to the next season! The season ID is: ${saveData["SEASON_ID"]} and the season emoji is: ${saveData["SEASON_EMOJI"]}`);
+      msg.channel.send(`Welcome to the next season! The season ID is: ${saveData["SEASON_ID"]} and the season emoji is: ${saveData["SEASON_EMOJI"]}`);
     } else {
-        msg.channel.send("You are not a PokemonBotManager :eyes:");
+      msg.channel.send("You are not a PokemonBotManager :eyes:");
     }
   }
 
-  else if (cmd(msg, 'trigger-rarity-increase')){
+  else if (cmd(msg, 'trigger-rarity-increase')) {
     if (msg.member.roles.cache.some(role => role.name === 'PokemonBotManager') || msg.author.id === process.env.AUTHOR_ID) {
       increaseRarity();
     } else {
@@ -383,7 +383,7 @@ msg.channel.send(result);
     }
   }
 
-  else if (cmd(msg, 'trigger-perk-update')){
+  else if (cmd(msg, 'trigger-perk-update')) {
     if (msg.member.roles.cache.some(role => role.name === 'PokemonBotManager') || msg.author.id === process.env.AUTHOR_ID) {
       perkUpdate();
     } else {
